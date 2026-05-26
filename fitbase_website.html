@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>FitBase – Gym Education</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--green:#1D9E75;--green-dark:#0F6E56;--green-light:#E1F5EE;--bg:#fff;--bg2:#f7f9f8;--text:#1a1a1a;--text2:#555;--border:#e5e5e5;--radius:12px}
+html{scroll-behavior:smooth}
+body{font-family:'Segoe UI',system-ui,sans-serif;color:var(--text);background:var(--bg);overflow-x:hidden}
+
+/* LOADER */
+#loader{position:fixed;inset:0;background:#000;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .8s ease}
+#loader.hide{opacity:0;pointer-events:none}
+#bh-canvas{display:block}
+.loader-text{color:#fff;font-size:22px;font-weight:700;margin-top:24px;letter-spacing:2px;opacity:.85}
+.loader-text span{color:#1D9E75}
+.loader-sub{color:rgba(255,255,255,.4);font-size:13px;margin-top:8px;letter-spacing:1px}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(255,255,255,.94);backdrop-filter:blur(14px);border-bottom:1px solid var(--border);padding:14px 40px;display:flex;align-items:center;justify-content:space-between}
+.logo{font-size:22px;font-weight:800;color:var(--text);text-decoration:none}.logo span{color:var(--green)}
+.nav-links{display:flex;gap:24px}
+.nav-links a{font-size:14px;color:var(--text2);text-decoration:none;cursor:pointer;transition:color .2s;background:none;border:none;font-family:inherit}
+.nav-links a:hover{color:var(--green)}
+.nav-cta{background:var(--green);color:#fff;padding:9px 22px;border-radius:999px;font-size:13px;font-weight:600;border:none;cursor:pointer;font-family:inherit;transition:background .2s,transform .2s}
+.nav-cta:hover{background:var(--green-dark);transform:translateY(-1px)}
+
+/* HERO */
+.hero{min-height:100vh;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;background:#080808}
+#hero-canvas{position:absolute;inset:0;width:100%;height:100%}
+.hero-overlay{position:absolute;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,.45) 0%,rgba(0,0,0,.72) 100%)}
+.hero-bg-img{position:absolute;inset:0;background:url('https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=1400&q=80') center/cover no-repeat;opacity:.28}
+.hero-content{position:relative;z-index:2;text-align:center;color:#fff;max-width:760px;padding:0 24px}
+.hero-badge{display:inline-block;background:rgba(29,158,117,.22);border:1px solid rgba(29,158,117,.45);color:#5DCAA5;padding:7px 20px;border-radius:999px;font-size:13px;margin-bottom:22px}
+.hero-content h1{font-size:clamp(36px,6vw,70px);font-weight:800;line-height:1.1;margin-bottom:18px;letter-spacing:-1.5px}
+.hero-content h1 span{color:#5DCAA5}
+.hero-content p{font-size:17px;opacity:.82;line-height:1.75;margin-bottom:34px;max-width:500px;margin-left:auto;margin-right:auto}
+.hero-btns{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
+.btn-h{padding:14px 32px;border-radius:999px;font-size:15px;font-weight:700;cursor:pointer;transition:all .25s;border:none;font-family:inherit}
+.btn-h-p{background:var(--green);color:#fff}
+.btn-h-p:hover{background:var(--green-dark);transform:translateY(-2px);box-shadow:0 8px 25px rgba(29,158,117,.45)}
+.btn-h-s{background:rgba(255,255,255,.1);color:#fff;border:1.5px solid rgba(255,255,255,.28)}
+.btn-h-s:hover{background:rgba(255,255,255,.18);transform:translateY(-2px)}
+.hero-stats{display:flex;gap:44px;justify-content:center;margin-top:52px;flex-wrap:wrap}
+.hero-stat .num{font-size:34px;font-weight:800;color:#5DCAA5}
+.hero-stat .lbl{font-size:12px;opacity:.65;margin-top:3px}
+.scroll-hint{position:absolute;bottom:28px;left:50%;transform:translateX(-50%);color:rgba(255,255,255,.45);font-size:22px;z-index:2;animation:abounce 2s infinite}
+
+/* SECTIONS */
+section{padding:80px 40px}
+.sec-header{text-align:center;margin-bottom:52px}
+.sec-badge{display:inline-block;background:var(--green-light);color:var(--green-dark);font-size:11px;font-weight:700;padding:5px 14px;border-radius:999px;margin-bottom:14px;text-transform:uppercase;letter-spacing:.7px}
+.sec-header h2{font-size:clamp(26px,4vw,40px);font-weight:800;margin-bottom:12px;letter-spacing:-.5px}
+.sec-header p{font-size:15px;color:var(--text2);max-width:500px;margin:0 auto;line-height:1.7}
+
+/* REVEAL */
+.reveal{opacity:0;transform:translateY(32px);transition:opacity .7s ease,transform .7s ease}
+.reveal.visible{opacity:1;transform:translateY(0)}
+
+/* EXERCISES */
+#exercises{background:var(--bg2)}
+.ex-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px}
+.ex-card{background:#fff;border-radius:16px;overflow:hidden;border:1px solid var(--border);transition:transform .3s,box-shadow .3s;cursor:default}
+.ex-card:hover{transform:translateY(-7px);box-shadow:0 18px 44px rgba(0,0,0,.11)}
+.ex-img-wrap{overflow:hidden;height:190px;background:#eee;position:relative}
+.ex-img-wrap img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .45s}
+.ex-card:hover .ex-img-wrap img{transform:scale(1.07)}
+.ex-img-fallback{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:52px;background:linear-gradient(135deg,#e8f5f0,#d4ede7)}
+.ex-body{padding:18px}
+.ex-body h3{font-size:16px;font-weight:700;margin-bottom:7px}
+.ex-body p{font-size:13px;color:var(--text2);line-height:1.65;margin-bottom:11px}
+.ex-tags{display:flex;gap:6px;flex-wrap:wrap}
+.ex-tag{font-size:11px;background:var(--green-light);color:var(--green-dark);padding:3px 10px;border-radius:999px;font-weight:600}
+
+/* PLANS */
+#plans{background:#fff}
+.plans-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:22px;max-width:980px;margin:0 auto}
+.plan-card{border-radius:18px;padding:28px;border:1.5px solid var(--border);position:relative;overflow:hidden;transition:transform .3s,box-shadow .3s;background:#fff}
+.plan-card:hover{transform:translateY(-5px);box-shadow:0 14px 38px rgba(0,0,0,.1)}
+.plan-card.featured{border-color:var(--green);background:linear-gradient(150deg,#f0faf6 0%,#fff 100%)}
+.popular-badge{position:absolute;top:16px;right:-28px;background:var(--green);color:#fff;font-size:10px;font-weight:800;padding:5px 40px;transform:rotate(45deg);letter-spacing:.5px}
+.plan-level{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.9px;margin-bottom:8px}
+.plan-level.beg{color:#185FA5}.plan-level.int{color:var(--green)}.plan-level.adv{color:#854F0B}
+.plan-card h3{font-size:20px;font-weight:800;margin-bottom:8px}
+.plan-desc{font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:18px}
+.plan-items{list-style:none}
+.plan-items li{font-size:13px;color:var(--text2);padding:7px 0;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:9px}
+.plan-items li:last-child{border:none}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--green);flex-shrink:0}
+
+/* NUTRITION */
+#nutrition{background:var(--bg2)}
+.nut-layout{display:grid;grid-template-columns:1fr 1fr;gap:52px;align-items:center;max-width:1020px;margin:0 auto}
+.nut-img-wrap{border-radius:22px;overflow:hidden;height:430px}
+.nut-img-wrap img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .4s}
+.nut-img-wrap:hover img{transform:scale(1.04)}
+.nut-right h3{font-size:22px;font-weight:800;margin-bottom:20px}
+.macro-bars{display:flex;flex-direction:column;gap:16px;margin-bottom:26px}
+.macro-item label{font-size:13px;font-weight:600;display:flex;justify-content:space-between;margin-bottom:6px;color:var(--text)}
+.macro-bar{height:10px;background:#e8e8e8;border-radius:999px;overflow:hidden}
+.macro-fill{height:100%;border-radius:999px;width:0;transition:width 1.6s cubic-bezier(.4,0,.2,1)}
+.fill-p{background:var(--green)}
+.fill-c{background:#378ADD}
+.fill-f{background:#EF9F27}
+.nut-tips{display:flex;flex-direction:column;gap:11px}
+.nut-tip{display:flex;align-items:flex-start;gap:11px;font-size:13px;color:var(--text2);line-height:1.55}
+.tip-icon{width:28px;height:28px;background:var(--green-light);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+
+/* CALCULATOR */
+#calc{background:#fff}
+.calc-wrap{max-width:620px;margin:0 auto;background:var(--bg2);border-radius:22px;padding:36px;border:1px solid var(--border)}
+.calc-fields{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:22px}
+.field label{font-size:13px;font-weight:600;margin-bottom:7px;display:block;color:var(--text)}
+.field input,.field select{width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;font-family:inherit;background:#fff;color:var(--text);transition:border-color .2s;outline:none}
+.field input:focus,.field select:focus{border-color:var(--green)}
+.calc-btn{width:100%;background:var(--green);color:#fff;padding:14px;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;transition:background .2s,transform .2s;font-family:inherit}
+.calc-btn:hover{background:var(--green-dark);transform:translateY(-1px)}
+.calc-result{margin-top:24px;display:none}
+.result-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.result-card{background:#fff;border-radius:14px;padding:18px;text-align:center;border:1px solid var(--border)}
+.r-num{font-size:28px;font-weight:800;color:var(--green)}
+.r-label{font-size:12px;color:var(--text2);margin-top:5px}
+.calc-note{font-size:12px;color:var(--text2);text-align:center;margin-top:14px;line-height:1.5}
+
+/* SUPPLEMENTS */
+#supplements{background:var(--bg2)}
+.supp-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:20px}
+.supp-card{background:#fff;border-radius:16px;padding:22px;border:1px solid var(--border);transition:transform .3s,box-shadow .3s}
+.supp-card:hover{transform:translateY(-5px);box-shadow:0 12px 32px rgba(0,0,0,.09)}
+.supp-badge{font-size:11px;font-weight:700;padding:4px 11px;border-radius:999px;display:inline-block;margin-bottom:12px}
+.s-yes{background:#E1F5EE;color:#0F6E56}
+.s-maybe{background:#FAEEDA;color:#854F0B}
+.s-no{background:#FCEBEB;color:#A32D2D}
+.supp-card h3{font-size:15px;font-weight:700;margin-bottom:7px}
+.supp-card p{font-size:13px;color:var(--text2);line-height:1.65}
+
+/* RECOVERY */
+#recovery{background:#fff}
+.rec-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:20px}
+.rec-card{border-radius:16px;padding:24px;border:1px solid var(--border);background:var(--bg2);text-align:center;transition:transform .3s,box-shadow .3s}
+.rec-card:hover{transform:translateY(-5px);box-shadow:0 12px 30px rgba(0,0,0,.09)}
+.rec-icon{font-size:38px;margin-bottom:14px}
+.rec-card h3{font-size:15px;font-weight:700;margin-bottom:8px}
+.rec-card p{font-size:13px;color:var(--text2);line-height:1.65}
+
+/* AI Q&A */
+#qa{background:linear-gradient(140deg,#060f06,#0d1f0d,#111)}
+.qa-sec-badge{display:inline-block;background:rgba(29,158,117,.2);color:#5DCAA5;font-size:11px;font-weight:700;padding:5px 14px;border-radius:999px;margin-bottom:14px;text-transform:uppercase;letter-spacing:.7px}
+#qa .sec-header h2{color:#fff}
+#qa .sec-header p{color:rgba(255,255,255,.55)}
+.qa-box{max-width:700px;margin:0 auto;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:22px;padding:28px;backdrop-filter:blur(10px)}
+.qa-msgs{min-height:230px;max-height:370px;overflow-y:auto;display:flex;flex-direction:column;gap:13px;margin-bottom:18px;padding-right:4px}
+.qa-msgs::-webkit-scrollbar{width:3px}.qa-msgs::-webkit-scrollbar-thumb{background:rgba(255,255,255,.15);border-radius:4px}
+.msg{padding:12px 16px;border-radius:14px;font-size:14px;line-height:1.65;max-width:88%;word-break:break-word}
+.msg.user{background:var(--green);color:#fff;align-self:flex-end;border-bottom-right-radius:4px}
+.msg.bot{background:rgba(255,255,255,.1);color:#ddd;align-self:flex-start;border-bottom-left-radius:4px}
+.msg.typing{color:rgba(255,255,255,.45);font-style:italic;font-size:13px}
+.qa-suggs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.qa-sug{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.13);color:rgba(255,255,255,.7);padding:7px 13px;border-radius:999px;font-size:12px;cursor:pointer;transition:all .2s;font-family:inherit}
+.qa-sug:hover{background:rgba(29,158,117,.25);border-color:var(--green);color:#fff}
+.qa-row{display:flex;gap:10px}
+.qa-input{flex:1;padding:12px 16px;border-radius:12px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.07);color:#fff;font-size:14px;font-family:inherit;outline:none;transition:border-color .2s}
+.qa-input::placeholder{color:rgba(255,255,255,.35)}
+.qa-input:focus{border-color:var(--green)}
+.qa-send{background:var(--green);color:#fff;border:none;padding:12px 22px;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:background .2s,transform .2s;white-space:nowrap}
+.qa-send:hover:not(:disabled){background:var(--green-dark);transform:translateY(-1px)}
+.qa-send:disabled{opacity:.45;cursor:default}
+
+/* FOOTER */
+footer{background:#050505;color:rgba(255,255,255,.4);text-align:center;padding:32px;font-size:13px}
+footer span{color:var(--green)}
+
+/* ANIMATIONS */
+@keyframes abounce{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-9px)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}
+.hero-content{animation:fadeUp 1s ease .3s both}
+
+@media(max-width:768px){
+  nav{padding:12px 16px}.nav-links{display:none}
+  section{padding:60px 20px}
+  .nut-layout{grid-template-columns:1fr}
+  .calc-fields{grid-template-columns:1fr}
+  .hero-stats{gap:22px}
+  .result-cards{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- LOADER -->
+<div id="loader">
+  <canvas id="bh-canvas" width="320" height="320"></canvas>
+  <div class="loader-text">Fit<span>Base</span></div>
+  <div class="loader-sub">Loading your fitness hub...</div>
+</div>
+
+<!-- NAV -->
+<nav>
+  <div class="logo">Fit<span>Base</span></div>
+  <div class="nav-links">
+    <a onclick="goTo('exercises')">Exercises</a>
+    <a onclick="goTo('plans')">Plans</a>
+    <a onclick="goTo('nutrition')">Nutrition</a>
+    <a onclick="goTo('calc')">Calculator</a>
+    <a onclick="goTo('supplements')">Supplements</a>
+    <a onclick="goTo('recovery')">Recovery</a>
+    <a onclick="goTo('qa')">Ask AI</a>
+  </div>
+  <button class="nav-cta" onclick="goTo('qa')">Ask AI ↗</button>
+</nav>
+
+<!-- HERO -->
+<section class="hero" id="home">
+  <canvas id="hero-canvas"></canvas>
+  <div class="hero-bg-img"></div>
+  <div class="hero-overlay"></div>
+  <div class="hero-content">
+    <div class="hero-badge">🏋️ Science-backed fitness education</div>
+    <h1>Train <span>smarter</span>,<br>not just harder</h1>
+    <p>Everything you need to build muscle, eat right, and recover well — backed by real science, explained simply.</p>
+    <div class="hero-btns">
+      <button class="btn-h btn-h-p" onclick="goTo('exercises')">Start Learning</button>
+      <button class="btn-h btn-h-s" onclick="goTo('calc')">Calculate My Calories</button>
+    </div>
+    <div class="hero-stats">
+      <div class="hero-stat"><div class="num">6+</div><div class="lbl">Core Exercises</div></div>
+      <div class="hero-stat"><div class="num">3</div><div class="lbl">Workout Plans</div></div>
+      <div class="hero-stat"><div class="num">AI</div><div class="lbl">Fitness Coach</div></div>
+      <div class="hero-stat"><div class="num">100%</div><div class="lbl">Free</div></div>
+    </div>
+  </div>
+  <div class="scroll-hint">↓</div>
+</section>
+
+<!-- EXERCISES -->
+<section id="exercises">
+  <div class="sec-header reveal">
+    <div class="sec-badge">Exercises & Form</div>
+    <h2>Master the fundamentals</h2>
+    <p>Learn proper form on the movements that build the most muscle and strength.</p>
+  </div>
+  <div class="ex-grid">
+    <div class="ex-card reveal">
+      <div class="ex-img-wrap"><div class="ex-img-fallback">🏋️</div></div>
+      <div class="ex-body"><h3>Back Squat</h3><p>Chest tall, knees tracking over toes, drive through the heels. The king of leg movements for mass.</p><div class="ex-tags"><span class="ex-tag">Quads</span><span class="ex-tag">Glutes</span><span class="ex-tag">Core</span></div></div>
+    </div>
+    <div class="ex-card reveal">
+      <div class="ex-img-wrap"><div class="ex-img-fallback">🔩</div></div>
+      <div class="ex-body"><h3>Deadlift</h3><p>Hinge at hips, neutral spine throughout. Engages the entire posterior chain from traps to calves.</p><div class="ex-tags"><span class="ex-tag">Hamstrings</span><span class="ex-tag">Glutes</span><span class="ex-tag">Back</span></div></div>
+    </div>
+    <div class="ex-card reveal">
+      <div class="ex-img-wrap"><div class="ex-img-fallback">💪</div></div>
+      <div class="ex-body"><h3>Bench Press</h3><p>Retract scapula, maintain arch, bar path to lower chest. Best chest and tricep mass builder.</p><div class="ex-tags"><span class="ex-tag">Chest</span><span class="ex-tag">Triceps</span><span class="ex-tag">Shoulders</span></div></div>
+    </div>
+    <div class="ex-card reveal">
+      <div class="ex-img-wrap"><div class="ex-img-fallback">🧗</div></div>
+      <div class="ex-body"><h3>Pull-Up</h3><p>Full hang to chin over bar. Builds lats, biceps, and grip. Use a resistance band to build up.</p><div class="ex-tags"><span class="ex-tag">Lats</span><span class="ex-tag">Biceps</span><span class="ex-tag">Grip</span></div></div>
+    </div>
+    <div class="ex-card reveal">
+      <div class="ex-img-wrap"><div class="ex-img-fallback">🙌</div></div>
+      <div class="ex-body"><h3>Overhead Press</h3><p>Bar starts at collarbone, press straight up, brace your core. Best shoulder mass builder.</p><div class="ex-tags"><span class="ex-tag">Shoulders</span><span class="ex-tag">Triceps</span><span class="ex-tag">Core</span></div></div>
+    </div>
+    <div class="ex-card reveal">
+      <div class="ex-img-wrap"><div class="ex-img-fallback">🦵</div></div>
+      <div class="ex-body"><h3>Romanian Deadlift</h3><p>Hinge with soft knees, feel the hamstring stretch. One of the best hamstring isolation movements.</p><div class="ex-tags"><span class="ex-tag">Hamstrings</span><span class="ex-tag">Glutes</span><span class="ex-tag">Lower Back</span></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- PLANS -->
+<section id="plans">
+  <div class="sec-header reveal">
+    <div class="sec-badge">Workout Plans</div>
+    <h2>Find your perfect plan</h2>
+    <p>Structured programs for every level — from first-timer to experienced lifter.</p>
+  </div>
+  <div class="plans-grid">
+    <div class="plan-card reveal">
+      <div class="plan-level beg">Beginner</div>
+      <h3>3-Day Full Body</h3>
+      <p class="plan-desc">Under 6 months training. Builds foundational strength and movement patterns safely.</p>
+      <ul class="plan-items">
+        <li><span class="dot"></span>3 days per week</li>
+        <li><span class="dot"></span>Full body each session</li>
+        <li><span class="dot"></span>Compound movement focus</li>
+        <li><span class="dot"></span>Linear progression model</li>
+        <li><span class="dot"></span>~45 min sessions</li>
+      </ul>
+    </div>
+    <div class="plan-card featured reveal">
+      <div class="popular-badge">POPULAR</div>
+      <div class="plan-level int">Intermediate</div>
+      <h3>4-Day Upper/Lower</h3>
+      <p class="plan-desc">6–24 months experience. More volume and frequency per muscle group per week.</p>
+      <ul class="plan-items">
+        <li><span class="dot"></span>4 days per week</li>
+        <li><span class="dot"></span>Upper/Lower split</li>
+        <li><span class="dot"></span>Accessory work included</li>
+        <li><span class="dot"></span>Progressive overload</li>
+        <li><span class="dot"></span>~60–75 min sessions</li>
+      </ul>
+    </div>
+    <div class="plan-card reveal">
+      <div class="plan-level adv">Advanced</div>
+      <h3>5-Day PPL</h3>
+      <p class="plan-desc">2+ years experience. Push/Pull/Legs twice weekly for serious muscle and strength gains.</p>
+      <ul class="plan-items">
+        <li><span class="dot"></span>5–6 days per week</li>
+        <li><span class="dot"></span>Push / Pull / Legs</li>
+        <li><span class="dot"></span>High volume phases</li>
+        <li><span class="dot"></span>Periodization cycles</li>
+        <li><span class="dot"></span>~75–90 min sessions</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- NUTRITION -->
+<section id="nutrition">
+  <div class="sec-header reveal">
+    <div class="sec-badge">Nutrition & Diet</div>
+    <h2>Fuel your training right</h2>
+    <p>Understand macros, calories, and food timing to maximize every session.</p>
+  </div>
+  <div class="nut-layout reveal">
+    <div class="nut-img-wrap">
+      <img src="https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=800&q=80" alt="Healthy food" onerror="this.style.display='none';this.parentNode.style.background='linear-gradient(135deg,#e8f5f0,#c8e8de)';this.parentNode.innerHTML='<div style=\'width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:80px\'>🥗</div>'"/>
+    </div>
+    <div class="nut-right">
+      <h3>The macro breakdown</h3>
+      <div class="macro-bars">
+        <div class="macro-item"><label>Protein <span>~35%</span></label><div class="macro-bar"><div class="macro-fill fill-p" data-w="35%"></div></div></div>
+        <div class="macro-item"><label>Carbohydrates <span>~45%</span></label><div class="macro-bar"><div class="macro-fill fill-c" data-w="45%"></div></div></div>
+        <div class="macro-item"><label>Fats <span>~20%</span></label><div class="macro-bar"><div class="macro-fill fill-f" data-w="20%"></div></div></div>
+      </div>
+      <div class="nut-tips">
+        <div class="nut-tip"><div class="tip-icon">🥩</div>Aim for ~2g protein per kg of bodyweight daily</div>
+        <div class="nut-tip"><div class="tip-icon">🍚</div>Eat most carbs around workouts for peak energy</div>
+        <div class="nut-tip"><div class="tip-icon">💧</div>Drink 3–4 liters of water per day minimum</div>
+        <div class="nut-tip"><div class="tip-icon">⏱️</div>Eat every 3–4 hours to keep muscle protein synthesis high</div>
+        <div class="nut-tip"><div class="tip-icon">🥚</div>Prioritize whole food sources over processed options</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CALCULATOR -->
+<section id="calc">
+  <div class="sec-header reveal">
+    <div class="sec-badge">Calorie Calculator</div>
+    <h2>Find your daily targets</h2>
+    <p>Get personalized calorie and macro targets based on your stats and goals.</p>
+  </div>
+  <div class="calc-wrap reveal">
+    <div class="calc-fields">
+      <div class="field"><label>Age</label><input type="number" id="c-age" placeholder="e.g. 16" min="10" max="80"/></div>
+      <div class="field"><label>Weight (kg)</label><input type="number" id="c-wt" placeholder="e.g. 57" min="30" max="300"/></div>
+      <div class="field"><label>Height (cm)</label><input type="number" id="c-ht" placeholder="e.g. 172" min="100" max="250"/></div>
+      <div class="field"><label>Gender</label><select id="c-sex"><option value="m">Male</option><option value="f">Female</option></select></div>
+      <div class="field"><label>Activity Level</label><select id="c-act">
+        <option value="1.2">Sedentary (desk job)</option>
+        <option value="1.375">Light (1–3 days/wk)</option>
+        <option value="1.55" selected>Moderate (3–5 days/wk)</option>
+        <option value="1.725">Active (6–7 days/wk)</option>
+        <option value="1.9">Very Active (2×/day)</option>
+      </select></div>
+      <div class="field"><label>Goal</label><select id="c-goal">
+        <option value="-400">Cut (lose fat)</option>
+        <option value="0">Maintain weight</option>
+        <option value="300" selected>Lean Bulk</option>
+        <option value="500">Aggressive Bulk</option>
+      </select></div>
+    </div>
+    <button class="calc-btn" onclick="doCalc()">Calculate My Targets →</button>
+    <div class="calc-result" id="c-result">
+      <div class="result-cards">
+        <div class="result-card"><div class="r-num" id="r-cal">—</div><div class="r-label">Calories / day</div></div>
+        <div class="result-card"><div class="r-num" id="r-pro">—</div><div class="r-label">Protein (g)</div></div>
+        <div class="result-card"><div class="r-num" id="r-carb">—</div><div class="r-label">Carbs (g)</div></div>
+      </div>
+      <p class="calc-note" id="c-note"></p>
+    </div>
+  </div>
+</section>
+
+<!-- SUPPLEMENTS -->
+<section id="supplements">
+  <div class="sec-header reveal">
+    <div class="sec-badge">Supplements</div>
+    <h2>What actually works</h2>
+    <p>Honest breakdowns based on scientific evidence — not marketing hype.</p>
+  </div>
+  <div class="supp-grid">
+    <div class="supp-card reveal"><div class="supp-badge s-yes">Well-Supported</div><h3>Creatine Monohydrate</h3><p>Most researched supplement in sports science. 3–5g daily increases strength, power, and muscle volume.</p></div>
+    <div class="supp-card reveal"><div class="supp-badge s-yes">Well-Supported</div><h3>Protein Powder</h3><p>Convenient way to hit protein targets. Whey absorbs fast post-workout; casein works slower overnight.</p></div>
+    <div class="supp-card reveal"><div class="supp-badge s-yes">Well-Supported</div><h3>Caffeine</h3><p>Proven to improve endurance, focus, and strength output. 3–6mg per kg bodyweight pre-training.</p></div>
+    <div class="supp-card reveal"><div class="supp-badge s-yes">Well-Supported</div><h3>Vitamin D3</h3><p>Critical for testosterone, bone strength, and immunity. Most people are deficient — 2000–4000 IU daily.</p></div>
+    <div class="supp-card reveal"><div class="supp-badge s-maybe">Mixed Evidence</div><h3>BCAAs</h3><p>Useful if training fasted. Redundant if daily protein from whole foods is already sufficient.</p></div>
+    <div class="supp-card reveal"><div class="supp-badge s-no">Overhyped</div><h3>Fat Burners</h3><p>Mostly stimulants with minimal real effect. A proper calorie deficit does far more than any pill.</p></div>
+  </div>
+</section>
+
+<!-- RECOVERY -->
+<section id="recovery">
+  <div class="sec-header reveal">
+    <div class="sec-badge">Recovery & Sleep</div>
+    <h2>Where gains are actually made</h2>
+    <p>Muscle is built outside the gym. Recovery is just as important as training.</p>
+  </div>
+  <div class="rec-grid">
+    <div class="rec-card reveal"><div class="rec-icon">🌙</div><h3>Sleep 7–9 hours</h3><p>Growth hormone peaks during deep sleep. Poor sleep destroys recovery and lowers testosterone.</p></div>
+    <div class="rec-card reveal"><div class="rec-icon">📅</div><h3>Rest days</h3><p>Muscles need 48–72 hours to recover after intense training. At least 1–2 full rest days per week.</p></div>
+    <div class="rec-card reveal"><div class="rec-icon">🧘</div><h3>Stretching</h3><p>Dynamic warm-up before, static stretching after. Reduces soreness and improves long-term mobility.</p></div>
+    <div class="rec-card reveal"><div class="rec-icon">🚶</div><h3>Active recovery</h3><p>Light walks or swimming on rest days boost blood flow and speed up muscle repair without strain.</p></div>
+    <div class="rec-card reveal"><div class="rec-icon">🧠</div><h3>Manage stress</h3><p>Chronic stress raises cortisol which breaks down muscle. Treat stress management like training.</p></div>
+  </div>
+</section>
+
+<!-- AI Q&A -->
+<section id="qa" style="padding:80px 40px">
+  <div class="sec-header">
+    <div class="qa-sec-badge">AI Fitness Coach</div>
+    <h2>Ask anything about fitness</h2>
+    <p>Powered by Claude AI — get instant, evidence-based answers to your gym questions.</p>
+  </div>
+  <div class="qa-box">
+    <div class="qa-suggs">
+      <button class="qa-sug" onclick="quickAsk(this)">How do I build muscle fast?</button>
+      <button class="qa-sug" onclick="quickAsk(this)">Best foods for bulking?</button>
+      <button class="qa-sug" onclick="quickAsk(this)">How much protein do I need?</button>
+      <button class="qa-sug" onclick="quickAsk(this)">Is creatine safe?</button>
+    </div>
+    <div class="qa-msgs" id="qa-msgs">
+      <div class="msg bot">Hey! I'm your AI fitness coach 💪 Ask me anything about training, nutrition, supplements, or recovery!</div>
+    </div>
+    <div class="qa-row">
+      <input class="qa-input" id="qa-in" placeholder="Ask a fitness question..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendQ()}"/>
+      <button class="qa-send" id="qa-btn" onclick="sendQ()">Send</button>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <p>Built with ❤️ by <span>FitBase</span> — Evidence-based fitness education for everyone.</p>
+  <p style="margin-top:8px;font-size:12px;opacity:.6">Content is educational only. Consult a professional before starting any new training program.</p>
+</footer>
+
+<script>
+/* ── HELPERS ── */
+function goTo(id){const el=document.getElementById(id);if(el)el.scrollIntoView({behavior:'smooth'})}
+
+/* ── BLACK HOLE LOADER ── */
+(function(){
+  const cv=document.getElementById('bh-canvas'),ctx=cv.getContext('2d');
+  const W=320,H=320,cx=W/2,cy=H/2;
+  let t=0,raf;
+  const stars=Array.from({length:180},()=>({
+    a:Math.random()*Math.PI*2,
+    r:80+Math.random()*120,
+    speed:.002+Math.random()*.006,
+    size:.5+Math.random()*1.5,
+    bright:Math.random()
+  }));
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    // deep space bg
+    ctx.fillStyle='#000';ctx.fillRect(0,0,W,H);
+    // accretion disk rings
+    for(let i=8;i>0;i--){
+      const ri=22+i*7,al=i/8*.55;
+      ctx.beginPath();ctx.ellipse(cx,cy,ri*1.9,ri*.55,-.15,0,Math.PI*2);
+      const g=ctx.createLinearGradient(cx-ri*1.9,cy,cx+ri*1.9,cy);
+      const hue=i>5?'38,200,140':'230,140,40';
+      g.addColorStop(0,`rgba(${hue},0)`);
+      g.addColorStop(.35,`rgba(${hue},${al})`);
+      g.addColorStop(.65,`rgba(${hue},${al})`);
+      g.addColorStop(1,`rgba(${hue},0)`);
+      ctx.strokeStyle=g;ctx.lineWidth=i>5?3:2;ctx.stroke();
+    }
+    // orbiting particles
+    stars.forEach(s=>{
+      s.a+=s.speed*(1+50/(s.r));
+      const px=cx+Math.cos(s.a)*s.r*1.55,py=cy+Math.sin(s.a)*s.r*.45;
+      const dist=Math.hypot(px-cx,py-cy);
+      const alpha=Math.min(1,dist/30)*(.4+.6*s.bright);
+      ctx.beginPath();ctx.arc(px,py,s.size,0,Math.PI*2);
+      ctx.fillStyle=`rgba(180,255,220,${alpha})`;ctx.fill();
+    });
+    // event horizon (pure black circle)
+    const ehg=ctx.createRadialGradient(cx,cy,0,cx,cy,38);
+    ehg.addColorStop(0,'rgba(0,0,0,1)');
+    ehg.addColorStop(.75,'rgba(0,0,0,1)');
+    ehg.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.beginPath();ctx.arc(cx,cy,42,0,Math.PI*2);ctx.fillStyle=ehg;ctx.fill();
+    // photon ring glow
+    const pg=ctx.createRadialGradient(cx,cy,36,cx,cy,52);
+    pg.addColorStop(0,'rgba(29,158,117,0)');
+    pg.addColorStop(.45,'rgba(29,158,117,.65)');
+    pg.addColorStop(1,'rgba(29,158,117,0)');
+    ctx.beginPath();ctx.arc(cx,cy,52,0,Math.PI*2);ctx.fillStyle=pg;ctx.fill();
+    t++;raf=requestAnimationFrame(draw);
+  }
+  draw();
+  setTimeout(()=>{
+    cancelAnimationFrame(raf);
+    const loader=document.getElementById('loader');
+    loader.classList.add('hide');
+    setTimeout(()=>{loader.style.display='none'},900);
+  },3200);
+})();
+
+/* ── HERO PARTICLE CANVAS ── */
+(function(){
+  const cv=document.getElementById('hero-canvas');
+  const ctx=cv.getContext('2d');
+  function resize(){cv.width=cv.offsetWidth;cv.height=cv.offsetHeight}
+  resize();window.addEventListener('resize',resize);
+  const pts=Array.from({length:60},()=>({x:Math.random(),y:Math.random(),vx:(Math.random()-.5)*.0003,vy:(Math.random()-.5)*.0003,r:.5+Math.random()*1.5}));
+  function draw(){
+    ctx.clearRect(0,0,cv.width,cv.height);
+    pts.forEach(p=>{
+      p.x+=p.vx;p.y+=p.vy;
+      if(p.x<0)p.x=1;if(p.x>1)p.x=0;
+      if(p.y<0)p.y=1;if(p.y>1)p.y=0;
+      ctx.beginPath();ctx.arc(p.x*cv.width,p.y*cv.height,p.r,0,Math.PI*2);
+      ctx.fillStyle='rgba(93,202,165,.45)';ctx.fill();
+    });
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+/* ── SCROLL REVEAL ── */
+const obs=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      e.target.classList.add('visible');
+      e.target.querySelectorAll('.macro-fill').forEach(f=>{f.style.width=f.dataset.w});
+    }
+  });
+},{threshold:.1});
+document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
+
+/* ── CALORIE CALCULATOR ── */
+function doCalc(){
+  const age=parseFloat(document.getElementById('c-age').value);
+  const wt=parseFloat(document.getElementById('c-wt').value);
+  const ht=parseFloat(document.getElementById('c-ht').value);
+  const sex=document.getElementById('c-sex').value;
+  const act=parseFloat(document.getElementById('c-act').value);
+  const goal=parseFloat(document.getElementById('c-goal').value);
+  if(!age||!wt||!ht||isNaN(age)||isNaN(wt)||isNaN(ht)){
+    alert('Please fill in Age, Weight, and Height.');return;
+  }
+  const bmr=sex==='m'?(10*wt)+(6.25*ht)-(5*age)+5:(10*wt)+(6.25*ht)-(5*age)-161;
+  const tdee=Math.round(bmr*act);
+  const cals=Math.round(tdee+goal);
+  const protein=Math.round(wt*2);
+  const fat=Math.round((cals*.25)/9);
+  const carbs=Math.round((cals-(protein*4)-(fat*9))/4);
+  document.getElementById('r-cal').textContent=cals;
+  document.getElementById('r-pro').textContent=protein+'g';
+  document.getElementById('r-carb').textContent=Math.max(0,carbs)+'g';
+  const goalMap={'-400':'cutting (fat loss)','0':'maintenance','300':'lean bulk','500':'aggressive bulk'};
+  document.getElementById('c-note').textContent=`Based on your stats: TDEE ${tdee} kcal/day. Adjusted for ${goalMap[goal]||'your goal'}.`;
+  const res=document.getElementById('c-result');
+  res.style.display='block';res.style.animation='fadeUp .45s ease';
+}
+
+/* ── AI Q&A ── */
+function addMsg(text,cls){
+  const d=document.createElement('div');
+  d.className='msg '+cls;d.textContent=text;
+  const msgs=document.getElementById('qa-msgs');
+  msgs.appendChild(d);msgs.scrollTop=msgs.scrollHeight;
+  return d;
+}
+function quickAsk(btn){document.getElementById('qa-in').value=btn.textContent;sendQ()}
+async function sendQ(){
+  const inp=document.getElementById('qa-in');
+  const btn=document.getElementById('qa-btn');
+  const q=inp.value.trim();if(!q)return;
+  inp.value='';btn.disabled=true;
+  addMsg(q,'user');
+  const typing=addMsg('Thinking...','bot typing');
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:1000,
+        system:'You are FitBase AI, an expert gym and fitness coach. Answer questions about training, nutrition, supplements, and recovery concisely, practically, and in a friendly tone. Keep answers under 130 words. Use plain text only, no markdown.',
+        messages:[{role:'user',content:q}]
+      })
+    });
+    const data=await res.json();
+    typing.remove();
+    const txt=data?.content?.[0]?.text;
+    if(txt){addMsg(txt,'bot')}
+    else{addMsg('Sorry, I could not get a response. Please try again!','bot')}
+  }catch(err){
+    typing.remove();
+    addMsg('Connection error. Please check your internet and try again.','bot');
+  }
+  btn.disabled=false;
+  document.getElementById('qa-in').focus();
+}
+</script>
+</body>
+</html>
